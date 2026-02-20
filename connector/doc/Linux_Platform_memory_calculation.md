@@ -9,20 +9,21 @@ Below, you can find how the Linux Platform connector calculates memory-related p
 The sections below detail the parameters retrieved from the system, the formulas used for calculated values, and the mapping between raw system data and connector parameters.
 
 > [!NOTE]
-> The calculations below are used starting from version 2.0.2.8 (see [Changes in Range 2.0.x Compared to Earlier Ranges](#changes-in-range-20x-compared-to-earlier-ranges)).
+> The calculations below are used starting from version 2.0.3.x (see [Changes in Range 2.0.3.x Compared to Earlier Ranges](#changes-in-range-203x-compared-to-earlier-ranges)).
 
 | Parameter Name                   | PID | Display              | SSH Command    | SNMP OID                     | Comments                        |
 | -------------------------------- | --- | -------------------- | -------------- | -----------------------------| ------------------------------- |
 | Total Memory                     | 172 | General, Memory Info | N/A            | N/A                          | Value calculated                |
 | Total RAM Memory                 | 114 | Memory Info          | `MemTotal`     | OID: 1.3.6.1.4.1.2021.4.5.0  | N/A                             |
 | Total Swap Memory                | 118 | Memory Info          | `SwapTotal`    | OID: 1.3.6.1.4.1.2021.4.3.0  | N/A                             |
-| Available Memory                 | 112 | General, Memory Info | `MemAvailable` | OID: 1.3.6.1.4.1.2021.4.6.0  | N/A                             |
+| Available Memory                 | 112 | General, Memory Info | `MemAvailable` | OID: 1.3.6.1.4.1.2021.4.11.0 | N/A                             |
 | Available Swap Memory            | 119 | Memory Info          | `SwapFree`     | OID: 1.3.6.1.4.1.2021.4.4.0  | N/A                             |
 | Memory Buffer                    | 121 | Memory Info          | `Buffers`      | OID: 1.3.6.1.4.1.2021.4.14.0 | N/A                             |
 | Memory Cached                    | 122 | Memory Info          | N/A            | OID: 1.3.6.1.4.1.2021.4.3.0  | Value calculated (only for SSH) |
 | Memory Usage                     | 111 | General, Memory Info | N/A            | N/A                          | Value calculated                |
 | Swap Memory Usage                | 110 | General, Memory Info | N/A            | N/A                          | Value calculated                |
 | Memory Used                      | 113 | General, Memory Info | N/A            | N/A                          | Value calculated                |
+| RAM Memory Usage                 | 123 | Memory Info          | N/A            | N/A                          | Value calculated                |
 
 ## Total Memory
 
@@ -61,7 +62,7 @@ $$
 \begin{equation}
 \begin{split}
 \text{Memory Usage}&=\left(1-\frac{\text{Available Memory}}{\text{Total Memory}}\right)\times 100\\[10pt]
-&=\left(1-\frac{\text{MemAvailable}}{\text{MemTotal}}\right)\times{100}
+&=\left(1-\frac{\text{MemAvailable}}{\text{MemTotal + SwapTotal}}\right)\times{100}
 \end{split}
 \end{equation}
 $$
@@ -102,8 +103,8 @@ $$
 $$
 \begin{equation}
 \begin{split}
-\text{Memory Used}&=\frac{\lvert\text{Total Memory}-\text{Available Memory}\rvert}{1024}\\[10pt]
-&=\frac{\lvert(\text{MemTotal})-(\text{MemAvailable})\rvert}{1024}
+\text{Memory Used}&=\frac{\text{Total Memory}-\text{Available Memory}}{1024}\\[10pt]
+&=\frac{\text{MemTotal}-\text{MemAvailable}}{1024}
 \end{split}
 \end{equation}
 $$
@@ -122,11 +123,25 @@ $$
 \end{equation}
 $$
 
-## Changes in Range 2.0.x Compared to Earlier Ranges
+## Memory RAM Usage
+
+The percentage of physical RAM currently in use. This metric focuses specifically on RAM usage, excluding swap memory.
+
+$$
+\begin{equation}
+\begin{split}
+\text{Memory RAM Usage}&=\left(1-\frac{\text{Available Memory}}{\text{Total RAM Memory}}\right)\times{100}\\[10pt]
+&=\left(1-\frac{\text{MemAvailable}}{\text{MemTotal}}\right)\times{100}
+\end{split}
+\end{equation}
+$$
+
+## Changes in Range 2.0.3.x Compared to Earlier Ranges
 
 - The following parameters have been renamed to better reflect their purpose:
 
   - Total Physical Memory (PID: 172) is now Total Memory.
+  - Total Real Memory (PID: 114) is now Total RAM Memory.
   - Available Physical Memory (PID: 112) is now Available Memory.
   - Used Physical Memory (PID: 113) is now Memory Used.
 
@@ -137,4 +152,6 @@ $$
   - Actual Physical Memory Usage (PID: 174)
   - Physical Memory Usage (PID: 124)
 
-- For SNMP, the available memory was retrieved initially using the OID 1.3.6.1.4.1.2021.4.11.0 (`MemTotalFree`), which has now been replaced with OID 1.3.6.1.4.1.2021.4.6.0 to align with the SSH command `MemAvailable`.
+- The following parameters have been added to provide more accurate memory metrics:
+
+  - Memory RAM Usage (PID: 124) to specifically track RAM usage.
